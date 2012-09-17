@@ -1,0 +1,107 @@
+Here's a summary of tests in this directory.  These tests are not
+currently automated.  Sorry.
+
+Jim
+1/3/07
+
+probe5.c -- See the source for directions.
+	This test first passed cleanly with the 10/18/06 bits.
+
+probe5ag.c (aggregate probes) -- See the source for directions.
+	This test first passed cleanly with the 10/18/06 bits.
+
+probe6.c (multiple probes in same process) -- See the source for directions.
+	This test first passed cleanly with the 10/18/06 bits.
+
+probe7-thread.c (multithreaded app) -- See the source for directions.
+	Note that this is an app to be probed.  You can use probe5.c
+	to probe it, but you must specify (e.g.) vaddr=0x08048594 on
+	insmod.  This test first passed cleanly with the 11/10/06 bits.
+	(Unregistration while the process was still running took a
+	while to get right.)
+
+suicide.c (regression test: uprobe handler exits) -- See the source for
+	directions.  This test first passed cleanly with the 11/2/06 bits.
+
+probe5lim.c -- A test of deferred registration (i.e., calling
+	[un]register_u[ret]probe() from a handler).  Passes.
+
+blink.c, blink2.c -- More tests of deferred registration.  Passes.
+
+rprobe6.c -- Tests uretprobes.  Passes.
+
+pong.c -- Tests uretprobes + deferred registration.  This can oops if
+	you do "rmmod pong" before probeme4 runs to completion.  Runs OK
+	otherwise.  See bug #7.
+
+pong_wa7.c -- Modified version of pong.c that works around bug #7.
+
+I've also successfully tested:
+- Probing multiple processes concurrently (e.g., probing one with probe5.ko
+and one with probe5ag.ko).
+- Probing the same process with probes registered from different modules
+(e.g., probe5.ko and probe5ag.ko again).
+- Registering and unregistering both while the probed app is stopped (e.g.,
+awaiting input) and while it's running.
+
+KNOWN BUGS
+----------
+next bug #: 9
+[When you fix a bug, don't delete its description; just move it to the
+FIXED BUGS section.  Eventually we'll switch to bugzilla.]
+
+6. Uprobes has the same problem as Kprobes if a handler incurs a fault
+via a stray memory reference or some such: there's not really any way to
+recover without an oops.
+
+7. Bad things happen if a probe is on the deferred_registrations list
+when the module that contains it is rmmod-ed.  pong.c can demonstrate
+this.  (This can be viewed as cockpit error, since the user should know
+not to allow cleanup_module() to complete while its probe objects are
+still in use.  pong_wa7.c works around this by keeping track of the
+number of pending [un]registrations.  But it would be nice if uprobes
+could tolerate this.)
+
+8. I've seen this twice, but it's hard to reproduce it.
+$ ./probeme4 1000000000		# 10**9, so it runs for several seconds
+				# even when it's not being probed
+I am process 1234.  Attach and press Enter:
+[Press Enter to set probeme4 off and running.]
+# insmod pong_wa7.ko verbose=0 pid=1234
+Here printk tells us:
+Registering entry handler on pid 1234, vaddr 0x80484a8
+Unable to handle kernel NULL pointer dereference at virtual address 00000000
+The exception is on the line
+	down_write(&uk->mutex);
+in purge_uprobe().  Looks like uk is NULL.
+purge_uprobe() was called from register_uprobe(), apparently after the
+call to wait_event().  I don't know why u->status is non-zero.  u probably
+got scribbled on.
+The preceding call to do_init_uretprobes() apparently succeeded.
+
+FIXED BUGS
+----------
+1. Unregistering a uprobe while the probee is running fails intermittently.
+The probee dies with a SIGTRAP.  Perhaps while waiting to quiesce, probee
+hits a breakpoint, quiesces, removes the uprobe, then doesn't know what
+to do with the SIGTRAP.
+[Fixed for single-threaded apps in Rev 1.19 of kernel/uprobes.c.
+Fixed for multithreaded apps in Rev 1.28 (and 1.26).]
+
+2. Single-stepping out of line fails consistently on dwilder's system,
+but seems to work fine on certain other systems.  Does dwilder's
+system implement NX support?
+[Fixed in Revs 1.5-1.8 of arch/i386/kernel/uprobes.c.]
+
+3. We hold utask->mutex and uk->mutex while running u->handler, so
+if the probee exits while running u->handler, uprobe_report_exit()
+will deadlock.
+[Fixed in Rev 1.22 of uprobes.c.  regression test = suicide.c]
+
+4. Code inspection suggests that Ananth's enhancement to uprobe_report_exit()
+(kernel/uprobes.c Rev 1.18) may have some bugs.
+[Fixed in Revs 1.23 and 1.24.]
+
+5. A simplified version of the find_stack* functions in i386-uprobes.c
+(which doesn't fuss vmas) needs to be checked in.
+[Fixed in Rev 1.5 of arch/i386/kernel/uprobes.c.]

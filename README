@@ -1,0 +1,30 @@
+	Uprobes test readme. 
+-------------------------------------------
+Requirements
+-----------
+All tests need debugfs mounted 
+	(i.e kernel should be built with CONFIG_DEBUG_FS option set)
+	debugfs can be mounted by the below command
+		"mount -t debugfs debugfs /sys/kernel/debug"
+
+Also dejagnu and expect need to be installed.
+
+How to Run:
+-----------
+Run "make check" to compile and run tests.
+
+Run "runtest --tool uprobes" 
+	(or  "runtest" ) to run tests.
+
+Run "make" or "make default" to just compile tests.
+	
+See results in uprobes.sum (summary) and uprobes.log.
+	(if --tool option is not used.  or testrun.sum (summary) 
+	and testrun.log )
+
+To run a single test
+-------------------
+runtest --tool uprobes <path to expect script>
+
+For example:
+runtest --tool uprobes ./uprobes.w/10k_iterations.exp

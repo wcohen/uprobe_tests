@@ -1,0 +1,155 @@
+
+proc uprobes_mount_debugfs {args} {
+	set cmd "./mount_debugfs"
+	catch {eval exec $cmd} output
+	wait
+	return $output
+}
+
+
+proc uprobes_rmmod {args} {
+
+
+	global test module
+
+	#set cmd "/sbin/rmmod $module && ! fgrep -q $module /proc/modules"
+	set cmd "/sbin/rmmod $module"
+	set loc_return 0
+	verbose -log "removing $module"
+	eval spawn $cmd
+	expect {
+
+	-re {ERROR}
+	     { set loc_return 1; verbose -log $expect_out(0,string);
+		exp_continue }
+	-re {Error}
+	    { set loc_return 1; verbose -log $expect_out(0,string);
+		exp_continue }
+	-re {[^\r]*\r} { set loc_return 1; verbose -log $expect_out(0,string);
+		exp_continue }
+	eof { }
+	timeout { exp_continue }
+	}
+	wait
+	return $loc_return
+}
+
+proc uprobes_diff {args} {
+	global test e_file r_file
+	set loc_return -1
+	set ccmd "cat $r_file"
+	catch {eval exec $ccmd} output
+	wait
+
+	set ind 0
+	foreach line [split $output "\n"] {
+		regsub -all { [1-9][0-9,]+} $line " 1234" line
+		regsub -all {0x[0-9a-fA-F]+} $line 0xC0123456 line
+
+		#puts "$line"
+		set results($ind) $line
+		incr ind
+	}
+
+	set cmd "cat $e_file"
+	catch {eval exec $cmd} output
+	wait
+	set i 0
+	foreach line [split $output "\n"] {
+		if {$i > $ind} { break }
+		if {[string compare $results($i) $line]} {
+			puts "$results($i) $i $line"
+		} else {
+			incr i
+		}
+	}
+
+	set res [uprobes_rmmod]
+
+	if {$i == $ind} {
+		set loc_return 0
+	} else {
+		puts "$e_file $r_file"
+		puts "i is $i ind is $ind"
+		puts "$test FAILED. expected output of was:"
+		puts "------------------------------------------"
+		puts $output
+		puts "------------------------------------------"
+		puts "actual output is:"
+		puts "------------------------------------------"
+		set i 0
+		for {} {$i < $ind} {incr i} {
+			puts "$results($i)"
+		}
+		puts "------------------------------------------"
+		set loc_return -1
+		puts "check /var/log/messages"
+	}
+}
+
+proc uprobes_run_test {args} {
+	global test e_file r_file rdir module
+	puts "uprobes_run_test $test"
+	set loc_return -1
+	verbose -log "starting $args"
+	eval spawn $args
+	expect {
+
+	-re {FAILED}
+	     { verbose -log $expect_out(0,string); exp_continue }
+	-re {Error}
+	    { set loc_return 1; verbose -log $expect_out(0,string);
+		exp_continue }
+	-re {PASSED}
+	    { set loc_return 0 }
+	-re {[^\r]*\r} { verbose -log $expect_out(0,string); exp_continue }
+	eof { }
+	timeout { exp_continue }
+	}
+	set ccmd "./end_mod $rdir/$module/cleanup"
+	catch {eval spawn $ccmd} output
+	wait
+
+	set res [uprobes_diff $e_file $r_file]
+	set results [wait]
+	verbose -log "wait results: $results"
+	if {$res >= 0} {
+		return $loc_return 
+	}
+	return $res
+}
+
+# negative testcases: Here we don't expect output be PASSED, ERROR, or FAILED.
+proc uprobes_run_test_neg {args} {
+	global test e_file r_file
+	puts "uprobes_run_test_neg $test"
+	set loc_return -1
+	verbose -log "starting $args"
+	eval spawn $args
+	expect {
+
+	-re {FAILED}
+	     { verbose -log $expect_out(0,string); exp_continue }
+	-re {Error}
+	    { set loc_return 1; verbose -log $expect_out(0,string);
+		exp_continue }
+	-re {ERROR}
+	    { set loc_return 1; verbose -log $expect_out(0,string);
+		exp_continue }
+	-re {PASSED}
+	    { set loc_return -1; verbose -log $expect_out(0,string);
+		exp_continue }
+	-re {[^\r]*\r}
+	    { set loc_return 0 }
+	eof { }
+	timeout { exp_continue }
+	}
+	sleep 2;
+	set res [uprobes_diff $e_file $r_file]
+	set results [wait]
+	verbose -log "wait results: $results"
+	if {$res >= 0} {
+		return $loc_return 
+	}
+	return $res
+}

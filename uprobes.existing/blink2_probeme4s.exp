@@ -1,0 +1,14 @@
+
+load_lib uprobes.exp
+
+global test e_file r_file
+
+set rdir [uprobes_mount_debugfs]
+
+set test "test for 2 probes on 2 different probepoints"
+set r_file "$rdir/blink2/data"
+set e_file "uprobes.existing/blink2_probeme4s"
+set module blink2
+puts "running: $test"
+set rc [uprobes_run_test  ./runtest.sh uprobes.existing probeme4s blink2 1 50]
+if {$rc == 0} { pass $test } else { fail $test }

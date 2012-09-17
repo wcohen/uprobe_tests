@@ -1,0 +1,3 @@
+Registering uprobe for reg_all on pid 1234 vaddr 0xC0123456[reg_all]
+Registering uprobe for unreg_all on pid 1234 vaddr 0xC0123456[unreg_all]
+Registering uprobe on pid 1234 vaddr 0xC0123456[_probe_0]

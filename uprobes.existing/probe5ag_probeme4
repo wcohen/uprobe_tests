@@ -1,0 +1,32 @@
+Registering 6 uprobes on pid 1234 vaddr 0xC0123456
+add() called
+add() called
+add() called
+add() called
+add() called
+add() called
+add() called
+add() called
+add() called
+add() called
+add() called
+add() called
+add() called
+add() called
+add() called
+add() called
+add() called
+add() called
+add() called
+add() called
+add() called
+add() called
+add() called
+add() called
+add() called
+add() called
+add() called
+add() called
+add() called
+add() called
+nhits=30

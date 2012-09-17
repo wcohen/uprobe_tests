@@ -1,0 +1,248 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <pthread.h>
+#include <signal.h>
+#include <sys/types.h>
+#include <linux/unistd.h>
+#include <errno.h>
+#include <signal.h>
+
+#include "sys/resource.h"
+#include "sys/syscall.h"
+
+#define noinline __attribute__((noinline))
+
+static pid_t gettid (void)
+{
+    return syscall(__NR_gettid);
+}
+
+
+// set debug to 1 for additional printfs
+#define debug 1
+
+#define NUM_PROBES 10
+#define MAX_THREADS 1000
+
+/* FIXME move into a header */
+struct uinfo {
+	pid_t utid,ktid;
+	ulong ucount, kcount;
+	int results;
+};
+
+void report_pass(void)
+{
+	printf("***PASSED***\n\n");
+	exit(0);
+}
+
+void report_fail(void)
+{
+	printf("!!!FAILED!!!\n\n");
+	exit(1);
+}
+
+void report_test_fail(char *msg)
+{
+	printf("!!!FAILED!!! - Internal test failure - %s\n\n",msg);
+	exit(1);
+}
+	
+
+// This defines the probe_#() functions. Uprobe breakpoints are
+// set on the function address.					
+// returns: -1=kernel is not counting
+//	    -2= user=!kernel
+//	    kcount 
+// FIXME handle counter wrap
+
+void *findme;
+
+#define PROBE_FUN(id)						\
+ 		noinline int _probe_##id(void *ptr) {		\
+		ulong ucount, kcount;				\
+		struct uinfo *slot = (struct uinfo *)ptr;	\
+								\
+		slot->ucount++;					\
+		ucount=slot->ucount;				\
+		kcount=slot->kcount;				\
+								\
+		if (debug){					\
+			int _id = id;				\
+			printf("debug: probe_%d utid=%d ktid=%d ptr=%p",\
+				_id,slot->utid, slot->utid,ptr);	\
+                	printf(" kcount=%ld ucount=%ld\n",kcount,ucount);\
+		}						\
+		if ((kcount == -1)||(kcount==ucount))		\
+			return kcount;				\
+		if (debug){					\
+			printf("ERROR: counts do not match:");	\
+			printf("probe_%d utid=%d ktid=%d slot=%p ",\
+				id, slot->utid,slot);		\
+                	printf("kcount=%ld ucount=%ld\n",kcount,ucount);\
+		}						\
+		return -2;					\
+	}							\
+	static noinline int probe_##id(void *ptr) {		\
+		struct uinfo *slot = (struct uinfo *)ptr;	\
+		if(slot->utid){					\
+			if( slot->utid != gettid() )		\
+			   report_test_fail("found wrong tid");	\
+		}else{						\
+			slot->utid = gettid();			\
+		}						\
+		return _probe_##id(ptr);			\
+	}
+
+/* create the probe point functions probe_0 --> probe_9 */
+PROBE_FUN(0);
+PROBE_FUN(1);
+PROBE_FUN(2);
+PROBE_FUN(3);
+PROBE_FUN(4);
+PROBE_FUN(5);
+PROBE_FUN(6);
+PROBE_FUN(7);
+PROBE_FUN(8);
+PROBE_FUN(9);
+
+
+#define	BUILD_PROBE_TABLE(table_name,size)		\
+	struct uinfo *table_name=calloc(size,sizeof(struct uinfo));\
+	int _j;						\
+	for(_j=0;_j<size;_j++){				\
+		table_name[_j].kcount=-1;		\
+		table_name[_j].ucount=-1;		\
+		table_name[_j].utid = (pid_t)0;		\
+		table_name[_j].ktid = (pid_t)0;		\
+	}
+	
+uint thread_1()
+{
+	int error=0;
+
+	BUILD_PROBE_TABLE(probe_table,NUM_PROBES);
+	if (debug) printf("Thread started: tid=%d probe_table=%p\n",gettid(),probe_table);
+
+	if ((error=probe_0(&probe_table[0]))<0) return(error);
+	if ((error=probe_1(&probe_table[1]))<0) return(error);
+	if ((error=probe_2(&probe_table[2]))<0) return(error);
+	if ((error=probe_3(&probe_table[3]))<0) return(error);
+	if ((error=probe_4(&probe_table[4]))<0) return(error);
+	if ((error=probe_5(&probe_table[5]))<0) return(error);
+	if ((error=probe_6(&probe_table[6]))<0) return(error);
+	if ((error=probe_7(&probe_table[7]))<0) return(error);
+	if ((error=probe_8(&probe_table[8]))<0) return(error);
+	if ((error=probe_9(&probe_table[9]))<0) return(error);
+	return(0); /* pass */
+}
+
+uint thread_2()
+{
+	/* this thread is run with no probe points registered */
+	int error;
+
+	BUILD_PROBE_TABLE(probe_table,NUM_PROBES);
+	if (debug) printf("Thread started: tid=%d probe_table=%p\n",gettid(),probe_table);
+
+	if ((error=probe_0(&probe_table[0]))!= -1) return(error);
+	if ((error=probe_1(&probe_table[1]))!= -1) return(error);
+	if ((error=probe_2(&probe_table[2]))!= -1) return(error);
+	if ((error=probe_3(&probe_table[3]))!= -1) return(error);
+	if ((error=probe_4(&probe_table[4]))!= -1) return(error);
+	if ((error=probe_5(&probe_table[5]))!= -1) return(error);
+	if ((error=probe_6(&probe_table[6]))!= -1) return(error);
+	if ((error=probe_7(&probe_table[7]))!= -1) return(error);
+	if ((error=probe_8(&probe_table[8]))!= -1) return(error);
+	if ((error=probe_9(&probe_table[9]))!= -1) return(error);
+	return(0); /* pass */
+}
+
+
+/*The uprobe module will place a probe on this function.  Calling this
+ *function will cause the uprobes module to register all the probes.  
+ */
+void reg_all(void)
+{
+	if (debug) printf("Registering all probe points\n");
+}
+
+/*The uprobe module will place a probe on this function.  Calling this
+ *function will cause the uprobes module to un-register all the probes. 
+ */
+void unreg_all(void)
+{
+	if (debug) printf("Un-registering all probe points\n");
+}
+
+wait_for_kthread(void)
+{
+	char c;
+	kill(getpid(),SIGSTOP);
+	return 0;
+}
+
+
+main(int argc, char **argv)
+{
+	int i,num_threads,niter,results;
+	int j;
+	pthread_t thread[MAX_THREADS];
+
+	if (argc != 3 || (num_threads = atoi(argv[1])) <= 0 
+			|| (niter = atoi(argv[2])) <= 0) {
+	   fprintf(stderr, "Usage: %s number_of_threads num_iterations\n", argv[0]);
+	   exit(1);
+	}
+
+	wait_for_kthread(); /* stop here and wait for the uprobe mod to be loaded */
+		num_threads=0;
+
+        for (j=0;j<niter;++j){
+		/* register probe points */
+		reg_all();
+		/* start thread_1's */
+		for(i=0;i<num_threads;i++){
+			if (pthread_create(&thread[i], NULL, (void *)thread_1,&niter)){
+				perror("pthread_create failed");
+				report_test_fail("pthread_create failed");
+			}
+		}
+		if (debug ) printf("%d threads started\n",i);
+
+        	/* Gather around */
+        	for(i=0;i<num_threads;i++){
+                	if (pthread_join(thread[i],(void **)&results) != 0)
+                        	report_test_fail("pthread_join returned an error\n");
+                	if ( results != 0 ) break;
+        	}
+		/* check if all threads saw the probe points */
+        	if(debug) printf("%d threads returned\n",i);
+        	if ((i != num_threads)||( results != 0 )) report_fail();
+
+		/* un-register probe points */
+		unreg_all();
+
+		/* start thread_2's */
+		for(i=0;i<num_threads;i++){
+			if (pthread_create(&thread[i], NULL, (void *)thread_2,&niter)){
+				perror("pthread_create failed");
+				report_test_fail("pthread_create failed");
+			}
+		}
+                if (debug ) printf("%d threads started\n",i);
+
+		/* Gather around */
+		for(i=0;i<num_threads;i++){
+		if (pthread_join(thread[i],(void **)&results) != 0)
+			report_test_fail("pthread_join returned an error\n");
+			if ( results != 0 ) break;
+		}
+		/* check if all threads ran without seeing any probe points hit*/ 
+		if(debug) printf("%d threads returned\n",i);
+		if ((i != num_threads)||( results != 0 )) report_fail();
+	} /* for */
+	report_pass();
+}

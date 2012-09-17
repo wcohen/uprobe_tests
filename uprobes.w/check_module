@@ -1,0 +1,8 @@
+#!/bin/bash
+kmod=$1
+fgrep  $kmod /proc/modules
+if [ $? == 0 ];then
+	echo "**Error** - Module $kmod did not unload"
+	exit 1
+fi
+exit 0

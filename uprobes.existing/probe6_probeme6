@@ -1,0 +1,22 @@
+Registering probes for add
+Registering probes for bye
+Registering probes for adios
+Registering probes for au_revoir
+Registering probes for auf_wiedersehen
+Registering probes for arrivederci
+add called
+add called
+add called
+add called
+add called
+bye called
+adios called
+au_revoir called
+auf_wiedersehen called
+arrivederci called
+probe6 add=5 calls
+probe6 bye=1 calls
+probe6 adios=1 calls
+probe6 au_revoir=1 calls
+probe6 auf_wiedersehen=1 calls
+probe6 arrivederci=1 calls

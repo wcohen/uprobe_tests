@@ -1,0 +1,13 @@
+load_lib uprobes.exp
+
+global test e_file r_file
+
+set rdir [uprobes_mount_debugfs]
+
+set test "suicide test"
+set r_file "$rdir/ksuicide/data"
+set e_file "uprobes.w/ksuicide"
+set module ksuicide 
+puts "running suicide test"
+set rc [uprobes_run_test  ./runtest.sh uprobes.w suicide ksuicide 2 5 4 ]
+if {$rc == 0} { pass $test } else { fail $test }

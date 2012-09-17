@@ -1,0 +1,14 @@
+load_lib uprobes.exp
+
+global test e_file r_file
+
+set rdir [uprobes_mount_debugfs]
+
+set test "100 thread test"
+set r_file "$rdir/kthread/data"
+set e_file "uprobes.w/kthread_100_10"
+set module kthread
+puts "running: 100 thread test"
+set rc [uprobes_run_test  ./runtest.sh uprobes.w uthread kthread 2 100 10 ]
+if {$rc == 0} { pass $test } else { fail $test }
+

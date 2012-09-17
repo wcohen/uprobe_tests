@@ -1,0 +1,13 @@
+#!/bin/bash
+
+NTHREADS=1
+NITERS=2
+
+	echo Running uthread test.
+	/sbin/rmmod kthread
+	./uthread $NTHREADS $NITERS &
+	PID=$!
+	echo pid is $PID
+	/sbin/insmod kthread.ko pid=$PID
+	kill -s SIGCONT $PID
+	wait

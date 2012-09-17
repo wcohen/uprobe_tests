@@ -1,0 +1,9 @@
+#! /bin/bash
+
+# $0 <symbol to search> <file to search>
+
+lineno=`grep -nwh $1 $2 | cut -f 1 -d:`
+
+a=`tail -n +$(($lineno-2)) $2| head -n 1 | cut -f 2 -d =`
+vaddr=${a## }
+echo vaddr=${vaddr%%,}

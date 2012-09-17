@@ -1,0 +1,42 @@
+#!/usr/bin/perl
+use strict;
+
+sub write_top
+{
+	print "struct symbol {\n";
+	print "\t unsigned long   address ;\n";
+	print "\t char            type;\n";
+	print "\t char            name[80];\n";
+	print "};\n\n";
+	print "static const struct symbol user_symbols[] = {\n";
+}
+
+sub write_bot
+{
+        print "};\n";
+}
+
+
+write_top();
+while ( <STDIN> ){
+	chomp;
+	my @nm=split;
+	my $address= shift @nm;
+	my $type=shift @nm;
+	my $name=shift @nm;
+
+	print "\t{\n";
+	if($address=~/^[0-9a-f]+$/ ){ 
+		print "\t .address = 0x$address,\n";
+	}else{
+		print "\t .address = -1,\n";
+		$name = $type;
+		$type = $address;
+	}
+
+	print "\t .type = '$type',\n";
+	$name='"'.$name.'"';
+	printf("\t .name = %s\n",$name);
+        print "\t},\n";
+}
+write_bot()

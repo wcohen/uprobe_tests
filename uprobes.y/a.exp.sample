@@ -1,0 +1,84 @@
+set test "a.exp"
+
+proc stap_run_alternatives2 {args} {
+	eval spawn $args
+	expect {
+		-re {ERROR}
+			{$expect_out(0,string);exp_continue; return -1}
+		-re {Hello}
+			{return 0}
+		-re { * } 
+			{return 1}
+        eof { }
+        timeout { exp_continue } 
+	}
+	return 0;
+}
+
+proc stap_run_alternatives {args} {
+    global e_res
+    set alternatives_found 0
+    verbose -log "starting $args"
+    eval spawn $args
+    expect { 
+	-re {PASS*}
+	    { set alternatives_found 1 }
+        -re {[^\r]*\r} { verbose -log $expect_out(0,string); exp_continue } 
+        eof { }
+        timeout { exp_continue } 
+    }
+
+    set results [wait]
+    verbose -log "wait results: $results"
+    return $alternatives_found
+}
+
+proc stap_run_alternatives1 {args} {
+	eval spawn $args
+	expect {
+		-re {PASS*}
+		-re { * } {return $expect_out(0,string);exp_continue }
+	}
+	return "hello world"
+}
+
+#puts "a.exp TEST is $TEST"
+set program_output FAIL
+set e_res PASS
+set output [ stap_run_alternatives1 printf "hello world" ]
+set rc [stap_run_alternatives printf "PASS"]
+if {$rc == 1} { pass $test } else { fail $test }
+set rc [stap_run_alternatives printf "PASS"]
+if {$rc == 1} { pass $test } else { fail $test }
+if ![regexp -- $program_output $output] {
+	puts "output is $output"
+	fail $test.123
+}
+set output [ stap_run_alternatives1 printf "FAIL" ]
+if ![regexp -- $program_output $output] {
+	puts "output1111 is $output"
+	fail $test.123
+}
+
+ set fd [open "/etc/profile" "r"]
+                gets $fd l1
+            #    set result [list l1 [read $fd]]
+                set result [list $l1 ]
+                close $fd
+	puts "result = $result"
+
+if {$rc == 1} { pass $test } else { fail $test }
+
+
+	puts "running insmod test3.ko"
+    set res [stap_run_alternatives2 /sbin/insmod /tmp/test123/test3.ko] 
+	puts "insmod returned $res"
+if {$res == 0} { pass $test } else { fail $test }
+	puts "cat /sys/kernel/debug/test3/data"
+    set res [stap_run_alternatives2 cat /sys/kernel/debug/test3/data] 
+	puts "cat returned $res"
+if {$res == 0} { pass $test } else { fail $test }
+	puts "running rmmod test3.ko"
+    set res [stap_run_alternatives2 /sbin/rmmod test3] 
+	puts "rmmod returned $res"
+if {$res == 0} { pass $test } else { fail $test }

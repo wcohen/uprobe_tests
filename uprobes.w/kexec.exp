@@ -1,0 +1,13 @@
+load_lib uprobes.exp
+
+global test e_file r_file
+
+set rdir [uprobes_mount_debugfs]
+
+set test "exec test"
+set r_file "$rdir/kexec/data"
+set e_file "uprobes.w/kexec"
+set module kexec 
+puts "running exec test"
+set rc [uprobes_run_test_neg  ./runtest.sh uprobes.w texec kexec 2 5 4 ]
+if {$rc == 0} { pass $test } else { fail $test }

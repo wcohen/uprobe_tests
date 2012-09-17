@@ -1,0 +1,12 @@
+Test Run By root on Tue May 29 08:23:07 2007
+Native configuration is i686-pc-linux-gnu
+
+		=== uprobes.existing/probe5_probe7-thread.exp tests ===
+
+Schedule of variations:
+    unix
+
+Running target unix
+
+		=== uprobes.existing/probe5_probe7-thread.exp Summary ===
+

@@ -1,0 +1,13 @@
+load_lib uprobes.exp
+
+global test e_file r_file
+
+set rdir [uprobes_mount_debugfs]
+
+set test "unreg test"
+set r_file "$rdir/kunreg/data"
+set e_file "uprobes.w/kunreg"
+puts "running unreg test"
+set module kunreg 
+set rc [uprobes_run_test  ./runtest.sh uprobes.w unreg kunreg 2 1 1 ]
+if {$rc == 0} { pass $test } else { fail $test }

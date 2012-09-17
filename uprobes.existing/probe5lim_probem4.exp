@@ -1,0 +1,18 @@
+
+load_lib uprobes.exp
+
+global test e_file r_file
+
+set rdir [uprobes_mount_debugfs]
+
+set cmd "./find_vaddr add uprobes.existing/probeme4.st"
+catch {eval exec $cmd} vaddr 
+
+set test "test for unregister a probe from its handler"
+set r_file "$rdir/probe5lim/data"
+set e_file "uprobes.existing/probe5lim_probem4"
+set module probe5lim
+puts "running: $test"
+set rc [uprobes_run_test  ./runtest.sh uprobes.existing probeme4 probe5lim 1 5 $vaddr]
+if {$rc == 0} { pass $test } else { fail $test }
+

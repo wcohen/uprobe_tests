@@ -1,0 +1,19 @@
+
+load_lib uprobes.exp
+
+global test e_file r_file
+
+set rdir [uprobes_mount_debugfs]
+
+set cmd "./find_vaddr add uprobes.existing/probeme4.st"
+catch {eval exec $cmd} vaddr 
+
+set test "test for uprobe and uretprobe share same probepoint"
+set r_file "$rdir/pong_wa7/data"
+set e_file "uprobes.existing/pong_wa7_probeme4"
+set module pong_wa7
+puts "running: $test"
+set rc [uprobes_run_test  ./runtest.sh uprobes.existing probeme4 pong_wa7 1 20 $vaddr]
+#set rc [uprobes_run_test  ./runtest.sh uprobes.existing probeme4 pong_wa7 1 20 ]
+if {$rc == 0} { pass $test } else { fail $test }
+

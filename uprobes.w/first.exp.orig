@@ -1,0 +1,89 @@
+load_lib uprobes.exp
+
+global test e_file r_file
+
+set rdir [uprobes_mount_debugfs]
+#set rdir "$rdir1/uprobe_tests/"
+#set rdir "/tmp"
+
+set test "10 thread test"
+set r_file "$rdir/kthread/data"
+set e_file "uprobes.w/kthread_10_10"
+set module kthread
+puts "running: 10 thread test"
+set rc [uprobes_run_test  ./runtest.sh uprobes.w uthread kthread 2 10 10]
+if {$rc == 0} { pass $test } else { fail $test }
+
+set test "100 thread test"
+set r_file "$rdir/kthread/data"
+set e_file "uprobes.w/kthread_100_10"
+set module kthread
+puts "running: 100 thread test"
+set rc [uprobes_run_test  ./runtest.sh uprobes.w uthread kthread 2 100 10 ]
+if {$rc == 0} { pass $test } else { fail $test }
+
+
+set test "10k iterations"
+set r_file "$rdir/kthread/data"
+set e_file "uprobes.w/kthread_5_10000"
+set module kthread
+puts "running: 10k iterations"
+set rc [uprobes_run_test  ./runtest.sh uprobes.w uthread kthread 2 5 10000 ]
+if {$rc == 0} { pass $test } else { fail $test }
+
+
+set test "fork thread (simple)"
+set r_file "$rdir/kfork_thread/data"
+set e_file "uprobes.w/kfork_thread_simple"
+set module kfork_thread 
+puts "running fork thread (simple)"
+set rc [uprobes_run_test  ./runtest.sh uprobes.w fork_thread kfork_thread 2 1 10 ]
+if {$rc == 0} { pass $test } else { fail $test }
+
+
+#set test "fork thread (hard)"
+#set r_file "$rdir/kfork_thread/data"
+#puts "running fork thread (hard)"
+#set e_file "uprobes.w/kfork_thread_hard"
+#set module kfork_thread 
+#set rc [uprobes_run_test  ./runtest.sh uprobes.w fork_thread kfork_thread 2 100 10000 ]
+#if {$rc == 0} { pass $test } else { fail $test }
+
+set test "unreg test"
+set r_file "$rdir/kunreg/data"
+set e_file "uprobes.w/kunreg"
+puts "running unreg test"
+set module kunreg 
+set rc [uprobes_run_test  ./runtest.sh uprobes.w unreg kunreg 2 1 1 ]
+if {$rc == 0} { pass $test } else { fail $test }
+
+set test "suicide test"
+set r_file "$rdir/ksuicide/data"
+set e_file "uprobes.w/ksuicide"
+set module ksuicide 
+puts "running suicide test"
+set rc [uprobes_run_test  ./runtest.sh uprobes.w suicide ksuicide 2 5 4 ]
+if {$rc == 0} { pass $test } else { fail $test }
+
+#puts "running sucide2 test"
+set r_file "$rdir/ksuicide2/data"
+set e_file "uprobes.w/ksuicide2"
+set module ksuicide2 
+#set rc [uprobes_run_test  ./runtest.sh uprobes.w suicide ksuicide2 2 5 4 ]
+#if {$rc == 0} { pass $test } else { fail $test }
+
+#
+#Completed ./runtest.sh tdie kdie 5 4
+#
+#puts "running texec test"
+#Completed ./runtest.sh texec k-exec 5 100
+
+
+
+# set fd [open "/etc/profile" "r"]
+#                gets $fd l1
+#            #    set result [list l1 [read $fd]]
+#                set result [list $l1 ]
+#                close $fd
+#	puts "result = $result"
+#

@@ -1,0 +1,11 @@
+#! /bin/bash 
+
+debugfs_entry=`mount | grep 'type debugfs'`                                                                                        
+if [ -z "$debugfs_entry" ]                                                                                                         
+then                                                                                                                               
+	debugfs_root=/sys/kernel/debug                                                                                             
+	mount -t debugfs debugfs $debugfs_root                                                                                     
+else                                                                                                                               
+	debugfs_root=`echo $debugfs_entry | awk '{print $3}'`                                                                      
+fi        
+echo $debugfs_root

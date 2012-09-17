@@ -1,0 +1,18 @@
+Registering steady handler on pid 1234 vaddr 0xC0123456
+ncalls = 3: Registering blink handler
+ncalls = 6: Registering blink handler
+ncalls = 9: Registering blink handler
+ncalls = 1234: Registering blink handler
+ncalls = 1234: Registering blink handler
+ncalls = 1234: Registering blink handler
+ncalls = 1234: Registering blink handler
+ncalls = 1234: Registering blink handler
+ncalls = 1234: Registering blink handler
+ncalls = 1234: Registering blink handler
+ncalls = 1234: Registering blink handler
+ncalls = 1234: Registering blink handler
+ncalls = 1234: Registering blink handler
+ncalls = 1234: Registering blink handler
+ncalls = 1234: Registering blink handler
+ncalls = 1234: Registering blink handler
+ncalls=50

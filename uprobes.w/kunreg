@@ -1,0 +1,31 @@
+Registering uprobe on pid 1234 vaddr 0xC0123456[_probe_0]
+OK
+Number of registerd probes = 1 
+Registering uprobe on pid 1234 vaddr 0xC0123456[_probe_1]
+OK
+Number of registerd probes = 2 
+Registering uprobe on pid 1234 vaddr 0xC0123456[_probe_2]
+OK
+Number of registerd probes = 3 
+Registering uprobe on pid 1234 vaddr 0xC0123456[_probe_3]
+OK
+Number of registerd probes = 4 
+Registering uprobe on pid 1234 vaddr 0xC0123456[_probe_4]
+OK
+Number of registerd probes = 5 
+Registering uprobe on pid 1234 vaddr 0xC0123456[_probe_5]
+OK
+Number of registerd probes = 6 
+Registering uprobe on pid 1234 vaddr 0xC0123456[_probe_6]
+OK
+Number of registerd probes = 7 
+Registering uprobe on pid 1234 vaddr 0xC0123456[_probe_7]
+OK
+Number of registerd probes = 8 
+Registering uprobe on pid 1234 vaddr 0xC0123456[_probe_8]
+OK
+Number of registerd probes = 9 
+Registering uprobe on pid 1234 vaddr 0xC0123456[_probe_9]
+OK
+Number of registerd probes = 1234 
+num_probes=11

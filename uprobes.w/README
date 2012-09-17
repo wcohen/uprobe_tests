@@ -1,0 +1,64 @@
+uprobes testing  11-7-2006
+-----------------------------
+To build:
+$ make clean
+$ make
+
+To test:
+$ make check  (runs all the following tests)
+
+Test descriptions:
+runtest - test runner script
+          Usage: runtest user-prog  kmod  Num-threads  NITERS
+
+10 thread test - Verify simple uprobes on multi threaded app.
+        test command: ./runtest uthread kthread 10 10
+        Starts 10 threads each thread hits 10 probed address 10 times.
+
+100 thread test - Verify simple uprobes on 100 threads
+        test command: ./runtest uthread kthread 100 10
+
+10k iterations - Simple uprobes for 10k iterations
+        test command: ./runtest uthread kthread 5 10000
+
+100 threads 10k iterations - yawn
+        test command: ./runtest uthread kthread 100 10000
+
+fork thread (simple) - Fork and verify  the parent's probes are working
+        and the child's are not
+        test command: ./runtest fork_thread kfork_thread 1 10
+
+fork thread (hard) - Just a bunch more of above..
+        test command: ./runtest fork_thread kfork_thread 100 10000
+
+mismatch kmod test - Not working!!
+        test command: #./runtest fork_thread kthread 1 1
+
+suicide test - exit in probe handler
+        test command: ./runtest suicide ksuicide 5 4
+        test command: dmesg | tail -2
+
+suicide2 test - Test Oops in probe handler
+        test command: ./runtest suicide ksuicide2 5 4
+        dmesg | tail -2
+
+die test - Check if uprobes cleans up for a multi-task
+          test when one task SEGFAULTS.
+        How to I tell if uprobes cleaned up??
+        No hangs/oops/panic can unload the module?
+        test command: ./runtest tdie kdie 5 4
+
+texec test - One thread execs
+        Not sure what is expected here, need to think about it.
+        test command: ./runtest texec k-exec 5 100
+
+unreg test - This is an attempt at an unregister_uprobe test.
+        test command: ./runtest unreg kunreg 1 1
+
+
+These tests all start user threads that call predetermined probe points.  Most test will start one or more threads running a "uprobe-counting-thread".  Typical one additional thread is started to do something nasty.  The user code checks for desired results of all threads as they return.
+
+A uprobe-counting-thread typical loops NITERS times calling one or more predefined probed functions.  Both the user and kernel (uprobe) code count the number of times each probed function is called by each thread.  The user code verifies that the two counts match.
+
+Predefined probe points are called probe_N(): where N is an int. Uprobe points are set on the function entree address. When the function is called by a user thread it returns one of the following: -1=the probe has never been hit, -2= The kernel and user don't agree on the number of prob hits, >0= The counts agree, returns the number of times probe was hit.
+

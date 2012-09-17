@@ -1,0 +1,2 @@
+Registering uprobe on pid 1234 vaddr 0xC0123456
+ncalls=200

@@ -1,0 +1,18 @@
+
+load_lib uprobes.exp
+
+global test e_file r_file
+
+set rdir [uprobes_mount_debugfs]
+
+set cmd "./find_vaddr add uprobes.existing/probe8-fork.st"
+catch {eval exec $cmd} vaddr 
+
+set test "test for no probe inheritance across fork"
+set r_file "$rdir/probe5/data"
+set e_file "uprobes.existing/probe5_probe8-fork"
+set module probe5
+puts "running: $test"
+set rc [uprobes_run_test ./runtest.sh uprobes.existing probe8-fork probe5 1 10 $vaddr]
+if {$rc == 0} { pass $test } else { fail $test }
+

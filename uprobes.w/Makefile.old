@@ -1,0 +1,83 @@
+obj-m := kthread.o kfork_thread.o kfork_and_defunc.o
+KDIR := /lib/modules/$(shell uname -r)/build
+PWD := $(shell pwd)
+
+MKSYM   = ./mksym
+NM      = /usr/bin/nm
+
+
+#### ukthread
+kthread.ko:kthread.c ukthread.h
+	cp ukthread.h user_config.h
+	$(MAKE) -C $(KDIR) SUBDIRS=$(PWD) modules
+
+uthread:uthread.c
+	$(CC) -g -lpthread -lc -o uthread uthread.c
+
+ukthread.h:uthread
+	$(NM) uthread | $(MKSYM) > ukthread.h
+
+
+
+#### fork_thread
+kfork_thread.c:kthread.c
+	cp kthread.c kfork_thread.c
+
+kfork_thread.ko:kfork_thread.c forkthread.h
+	cp forkthread.h user_config.h
+	$(MAKE) -C $(KDIR) SUBDIRS=$(PWD) modules
+
+forkthread.h:fork_thread
+	$(NM) fork_thread | $(MKSYM) > forkthread.h
+
+fork_thread:fork_thread.c
+	$(CC) -g -lpthread -lc -o fork_thread fork_thread.c
+
+
+#### fork_and_defunc
+fork_and_defunc:fork_and_defunc.c
+	$(CC) -g -lpthread -lc -o fork_and_defunc fork_and_defunc.c 
+
+fork_and_defunc.h:fork_and_defunc
+	$(NM) fork_and_defunc | $(MKSYM) > fork_and_defunc.h
+
+kfork_and_defunc.c:kthread.c
+	cp kthread.c kfork_and_defunc.c
+
+kfork_and_defunc.ko: kfork_and_defunc.c fork_and_defunc.h
+	cp fork_and_defunc.h user_config.h
+	$(MAKE) -C $(KDIR) SUBDIRS=$(PWD) modules
+
+# check section
+# usage: runtest <user-prog> <kernel-mod> <arg1-to-user-prog> <arg2>
+check: runtest
+	echo running: 10 thread test
+	./runtest uthread kthread 10 10
+
+	echo running: 100 thread test
+	./runtest uthread kthread 100 10
+
+	echo running: 500 thread
+	./runtest uthread kthread 500 10
+
+	echo running: 10k iterations
+	./runtest uthread kthread 5 10000
+
+	#echo running: 100 threads 10k iterations
+	#./runtest uthread kthread 100 10000
+
+	echo "running fork thread (simple)"
+	./runtest fork_thread kfork_thread 1 10
+
+
+
+all:kthread.ko kfork_thread.ko kfork_and_defunc.ko
+
+clean:
+	rm -f *.mod.c *.ko *.o .*.cmd *.ko
+	rm -rf .tmp_versions
+	rm -rf ukthread.h
+	rm -rf uthread
+	rm -rf fork_thread
+	rm -rf forkthread.h
+	rm -rf user_config.h

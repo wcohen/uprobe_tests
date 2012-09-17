@@ -1,0 +1,13 @@
+load_lib uprobes.exp
+
+global test e_file r_file
+
+set rdir [uprobes_mount_debugfs]
+
+set test "fork thread (hard)"
+set r_file "$rdir/kfork_thread/data"
+puts "running fork thread (hard)"
+set e_file "uprobes.w/kfork_thread_hard"
+set module kfork_thread 
+set rc [uprobes_run_test  ./runtest.sh uprobes.w fork_thread kfork_thread 2 100 1000 ]
+if {$rc == 0} { pass $test } else { fail $test }

@@ -1,0 +1,21 @@
+#
+#load_lib uprobes.exp
+#
+#global test e_file r_file
+#
+#set rdir [uprobes_mount_debugfs]
+#
+#
+#Completed ./runtest.sh tdie kdie 5 4
+#
+#Completed ./runtest.sh texec k-exec 5 100
+
+
+
+# set fd [open "/etc/profile" "r"]
+#                gets $fd l1
+#            #    set result [list l1 [read $fd]]
+#                set result [list $l1 ]
+#                close $fd
+#	puts "result = $result"
+#

@@ -1,0 +1,15 @@
+
+load_lib uprobes.exp
+
+global test e_file r_file
+
+set rdir [uprobes_mount_debugfs]
+
+set test "test for retprobe call chain"
+set r_file "$rdir/rprobe6/data"
+set e_file "uprobes.existing/rprobe6_probeme6"
+set module rprobe6
+puts "running: $test"
+set rc [uprobes_run_test ./runtest.sh uprobes.existing probeme6 rprobe6 1 5]
+if {$rc == 0} { pass $test } else { fail $test }
+
