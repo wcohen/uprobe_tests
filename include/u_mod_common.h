@@ -3,6 +3,7 @@
 #include <linux/init.h>
 #include <linux/uprobes.h>
 #include <linux/err.h>
+#include <linux/sched.h>
 #include <asm/uaccess.h>
 
 //#define DEBUG 1
