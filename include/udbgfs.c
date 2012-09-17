@@ -1,4 +1,5 @@
 #include <linux/debugfs.h>
+#include <linux/slab.h>
 #include <linux/stat.h>
 #include <linux/string.h>
 #include <linux/spinlock.h>
