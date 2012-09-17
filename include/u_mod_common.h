@@ -1,7 +1,6 @@
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
-#include <linux/utrace.h>
 #include <linux/uprobes.h>
 #include <linux/err.h>
 #include <asm/uaccess.h>
