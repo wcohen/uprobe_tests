@@ -108,7 +108,7 @@ ulong *get_first_arg(struct pt_regs * regs)
 
 unsigned long num_probes;
 
-void probe_handler(struct uprobe *u, struct pt_regs *regs)
+int probe_handler(struct uprobe_consumer *u, struct pt_regs *regs)
 {
 		struct uinfo *slot;
 		pid_t utid,ktid;
@@ -166,5 +166,6 @@ void probe_handler(struct uprobe *u, struct pt_regs *regs)
 			test_printk(" put_user returned an error!\n");
 
 		num_probes++;
+		return 0;
 }
 
