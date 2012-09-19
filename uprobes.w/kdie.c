@@ -11,8 +11,7 @@
 #include "../include/udbgfs.c"
 // Include the common testcode
 #include "../include/u_mod_common.h"
-
-
+#include "../include/uprobes-inode.c"
 
 static int pid = 0;
 module_param(pid, int, 0);
@@ -33,11 +32,19 @@ int init_module(void)
 	int ret;
 	int next;
 	char *found;
-	struct uprobe *usp;
+	struct inode *inode;
+	loff_t offset;
+	struct uprobe_consumer *usp;
 
 	num_probes=0;
 
 	printk(KERN_INFO "In kdie init_module \n");
+
+	if ( _init_uprobe() < 0){
+		printk(KERN_INFO "Unable to setup uprobe_register \n");
+		return -1;
+	}
+	
 	/* If we cant setup dbfs do not continue */
 	if ( u_dbfs_init("kdie") <  0 ){
 		printk(KERN_INFO "In kdie u_dbfs_init failed \n");
@@ -48,22 +55,23 @@ int init_module(void)
 	/* register all probes starting matching glob probe_[+]  */
         for_each_glob(next,"_probe",found){
 
-		usp=(struct uprobe *)kzalloc(sizeof(struct uprobe), GFP_USER);
+		usp=(struct uprobe_consumer *)kzalloc(sizeof(struct uprobe_consumer), GFP_USER);
 		if (unlikely(usp == NULL)){
 			printk(KERN_INFO "Out of memory\n");
 			u_dbfs_cleanup();
                 	return (-ENOMEM);
 		}
 
-		usp->pid=pid;
-		usp->vaddr=find_vaddr(found); /* FIXME: test for valid address */
+		/* FIXME: test for valid inode and offset */
+		inode = find_inode(found);
+		offset= find_offset(found);
 
 		usp->handler=probe_handler;
 
-		test_printk("Registering uprobe on pid %d, vaddr %#lx[%s]\n",
-			usp->pid, usp->vaddr,found);
+		test_printk("Registering uprobe on inode %d, offset %#lx[%s]\n",
+			inode, offset, found);
 
-		ret = register_uprobe(usp);
+		ret = uprobe_register(inode, offset, usp);
 		if (ret != 0) {
 			printk(KERN_INFO "register_uprobe() failed, returned %d\n", 
 					ret);

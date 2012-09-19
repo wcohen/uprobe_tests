@@ -11,10 +11,15 @@
 #include "../include/udbgfs.c"
 // Include the common testcode
 #include "../include/u_mod_common.h"
+#include "../include/uprobes-inode.c"
 
 #define MAX_PROBES 100
 int num_reg_probes;
-struct uprobe *probes[MAX_PROBES];
+static struct {
+  struct inode *inode;
+  loff_t offset;
+  struct uprobe_consumer *usp;
+} probes[MAX_PROBES];
 static int pid = 0;
 
 module_param(pid, int, 0);
@@ -28,47 +33,55 @@ static void unregister_all(struct uprobe *u, struct pt_regs *regs)
 {
 	int i;
 	printk(KERN_INFO "Unregistering %d probes\n",num_reg_probes);
-	for (i=0 ;i<=num_reg_probes ;i++){
-		unregister_uprobe(probes[i]);
+	for (i=0; i<=num_reg_probes ;i++){
+	  uprobe_unregister(probes[i].inode, probes[i].offset, probes[i].usp);
 	}
 }
 
 
-static void register_all(struct uprobe *u, struct pt_regs *regs)
+static int register_all(struct uprobe_consumer *u, struct pt_regs *regs)
 {
         int ret;
         int next;
         char *found;
-        struct uprobe *usp;
+	struct inode *inode;
+	loff_t offset;
+        struct uprobe_consumer *usp;
 
         num_reg_probes=0;
 
         /* register all probes starting matching glob probe_[+]  */
         for_each_glob(next,"_probe",found){
-                usp=(struct uprobe *)kzalloc(sizeof(struct uprobe),GFP_USER);
+                usp=(struct uprobe_consumer *)kzalloc(sizeof(struct uprobe_consumer),GFP_USER);
                 if (unlikely(usp == NULL)){
 			test_printk("kzalloc() failed, returned NULL");
-			return;
+			return 0;
 		}
 
-                usp->pid=pid;
-                usp->vaddr=find_vaddr(found);
-                usp->handler=probe_handler;
+		/* FIXME: test for valid inode and offset */
+		inode = find_inode(found);
+		offset= find_offset(found);
 
-                test_printk("Registering uprobe on pid %d, vaddr %#lx[%s]\n",
-                        usp->pid, usp->vaddr,found);
+                usp->handler = probe_handler;
 
-                ret = register_uprobe(usp);
+                test_printk("Registering uprobe on inode %d, offset %#lx[%s]\n",
+                        inode, offset, found);
+
+                ret = uprobe_register(inode, offset, usp);
                 if ((ret != 0) && (ret != -EINPROGRESS)) {
                         test_printk("register_uprobe() failed, returned %d\n", ret);
-			return;
+			return 0;
 		}
 
 		test_printk("OK\n");
 
-                probes[num_reg_probes++]=usp;
+                probes[num_reg_probes].inode = inode;
+                probes[num_reg_probes].offset = offset;
+                probes[num_reg_probes].usp = usp;
+		num_reg_probes++;
 		test_printk("Number of registerd probes = %d \n",num_reg_probes);
         }
+	return 0;
 }
 
 
@@ -83,10 +96,15 @@ int init_module(void)
 
 #ifdef UPROBES_REG_CALLBACK
 	int ret;
-	struct uprobe *usp;
+	struct uprobe_consumer *usp;
 #endif
 
 	printk(KERN_INFO "In kunreg init_module \n");
+
+	if ( _init_uprobe() < 0){
+		printk(KERN_INFO "Unable to setup uprobe_register \n");
+		return -1;
+	}
 
 	/* If we cant setup dbfs do not continue */
 	if ( u_dbfs_init("kunreg") <  0 ){
@@ -95,7 +113,7 @@ int init_module(void)
 	}
 #ifdef UPROBES_REG_CALLBACK
 	/* register uprobe for calling register_all() */
-	usp=(struct uprobe *)kzalloc(sizeof(struct uprobe),GFP_USER);
+	usp=(struct uprobe_consumer *)kzalloc(sizeof(struct uprobe_consumer),GFP_USER);
 	if (unlikely(usp == NULL)) {
 		printk(KERN_INFO "Out of memory\n");
 		u_dbfs_cleanup();
@@ -104,7 +122,7 @@ int init_module(void)
 
 	usp->pid=pid;
 	usp->vaddr=find_vaddr("reg_all"); 
-	usp->handler=register_all;
+	usp->handler = register_all;
 
 	test_printk(
 		"Registering uprobe for reg_all on pid %d, vaddr %#lx[%s]\n",

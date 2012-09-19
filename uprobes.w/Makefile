@@ -4,9 +4,8 @@ PWD := $(shell pwd)
 
 # Make a symbol-table include file from an a.out file.
 MKSYM   = ./mksym
-NM      = /usr/bin/nm
 %.st: %
-	$(NM) $< | $(MKSYM) > $<.st
+	$(MKSYM) $< > $<.st
 
 PROGS=uthread fork_thread fork_and_defunc suicide tdie texec unreg
 SYMTABS=uthread.st fork_thread.st fork_and_defunc.st suicide.st tdie.st texec.st unreg.st

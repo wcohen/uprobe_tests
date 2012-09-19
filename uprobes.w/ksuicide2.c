@@ -11,6 +11,7 @@
 #include "../include/udbgfs.c"
 // Include the common testcode
 #include "../include/u_mod_common.h"
+#include "../include/uprobes-inode.c"
 
 static int pid = 0;
 module_param(pid, int, 0);
@@ -20,11 +21,12 @@ static int verbose = 1;
 module_param(verbose, int, 0);
 MODULE_PARM_DESC(verbose, "verbose");
 
-static void suicide_handler(struct uprobe *u, struct pt_regs *regs)
+static int suicide_handler(struct uprobe_consumer *u, struct pt_regs *regs)
 {
         char *a;
         a=0;
         a[1]='A';
+	return 0;
 }
 
 static void child_exit(void) 
@@ -37,11 +39,19 @@ int init_module(void)
 	int ret;
 	int next;
 	char *found;
-	struct uprobe *usp;
+	struct inode *inode;
+	loff_t offset;
+	struct uprobe_consumer *usp;
 
 	num_probes=0;
 
 	printk(KERN_INFO "In ksuicide2 init_module \n");
+
+	if ( _init_uprobe() < 0){
+		printk(KERN_INFO "Unable to setup uprobe_register \n");
+		return -1;
+	}
+	
 	/* If we cant setup dbfs do not continue */
 	if ( u_dbfs_init("ksuicide2") <  0 ){
 		printk(KERN_INFO "In ksuicide2 u_dbfs_init failed \n");
@@ -52,23 +62,23 @@ int init_module(void)
 	/* register all probes starting matching glob probe_[+]  */
         for_each_glob(next,"_probe",found){
 
-		usp=(struct uprobe *)kzalloc(sizeof(struct uprobe), GFP_USER);
+		usp=(struct uprobe_consumer *)kzalloc(sizeof(struct uprobe_consumer), GFP_USER);
 		if (unlikely(usp == NULL)){
 			printk(KERN_INFO "Out of Memory\n");
 			u_dbfs_cleanup();
                 	return (-ENOMEM);
 		}
 
-		usp->pid=pid;
-		/* FIXME: test for valid address */
-		usp->vaddr=find_vaddr(found); 
+		/* FIXME: test for valid inode and offset */
+		inode = find_inode(found);
+		offset= find_offset(found);
 
 		usp->handler=probe_handler;
 
-		test_printk("Registering uprobe on pid %d, vaddr %#lx[%s]\n",
-			usp->pid, usp->vaddr,found);
+		test_printk("Registering uprobe on inode %d, offset %#lx[%s]\n",
+			inode, offset, found);
 
-		ret = register_uprobe(usp);
+		ret = uprobe_register(inode, offset, usp);
 		if (ret != 0) {
 			printk(KERN_INFO 
 				"register_uprobe() failed, returned %d\n",ret);
@@ -78,23 +88,23 @@ int init_module(void)
 	}
 
         /* re-register probe_9 to cal the suicide_handler */
-        usp=(struct uprobe *)kzalloc(sizeof(struct uprobe), GFP_USER);
+        usp=(struct uprobe_consumer *)kzalloc(sizeof(struct uprobe_consumer), GFP_USER);
         if (unlikely(usp == NULL)){
 		printk(KERN_INFO "Out of Memory\n");
 		u_dbfs_cleanup();
                 return (-ENOMEM);
 	}
 
-        usp->pid=pid;
-        usp->vaddr=find_vaddr("_probe_9");
+	/* FIXME: test for valid inode and offset */
+	inode = find_inode("_probe_9");
+	offset= find_offset("_probe_9");
 
-        usp->vaddr=usp->vaddr;
         usp->handler=suicide_handler;
 
-        test_printk("Registering uprobe on pid %d, vaddr %#lx[%s]\n",
-                usp->pid, usp->vaddr,"_probe_9");
+        test_printk("Registering uprobe on inode %d, offset %#lx[%s]\n",
+                inode, offset, "_probe_9");
 
-        ret = register_uprobe(usp);
+        ret = uprobe_register(inode, offset, usp);
         if (ret != 0) {
         	printk(KERN_ERR "register_uprobe() failed, returned %d\n",ret);
 		u_dbfs_cleanup();

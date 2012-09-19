@@ -6,19 +6,29 @@
 
 /* struct symbols is now defined in auto generated include file
 struct symbol {
-	unsigned long 	address ;
-	char		type;
+	struct inode    * inode ;
+	loff_t          offset ;
 	char		name[80];
 };
 */
 
 
-long int find_vaddr(char *name)
+struct inode *find_inode(char *name)
 {
 	int i;
 	for ( i=0; i<sizeof(user_symbols)/sizeof(struct symbol);i++ ){
 		if ( strcmp(name,user_symbols[i].name) == 0)
-			return user_symbols[i].address;
+			return user_symbols[i].inode;
+	}
+	return 0;
+}
+
+loff_t find_offset(char *name)
+{
+	int i;
+	for ( i=0; i<sizeof(user_symbols)/sizeof(struct symbol);i++ ){
+		if ( strcmp(name,user_symbols[i].name) == 0)
+			return user_symbols[i].offset;
 	}
 	return 0;
 }

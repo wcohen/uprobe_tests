@@ -4,8 +4,8 @@ use strict;
 sub write_top
 {
 	print "struct symbol {\n";
-	print "\t unsigned long   address ;\n";
-	print "\t char            type;\n";
+	print "\t struct inode    * inode ;\n";
+	print "\t loff_t          offset ;\n";
 	print "\t char            name[80];\n";
 	print "};\n\n";
 	print "static const struct symbol user_symbols[] = {\n";
@@ -16,27 +16,42 @@ sub write_bot
         print "};\n";
 }
 
+our $filename;
+our $inode;
+our $objdump;
+our @lines;
+our $line;
+$filename=$ARGV[0];
+$inode=`/bin/stat -c "%i" $filename`;
+chomp($inode);
+$objdump=`/bin/objdump -t $filename`;
 
+@lines=split '\n', $objdump;
 write_top();
-while ( <STDIN> ){
-	chomp;
-	my @nm=split;
-	my $address= shift @nm;
-	my $type=shift @nm;
+foreach $line ( @lines ){
+	chomp $line;
+	my @nm=split /\s+/, $line;
+	my $offset= shift @nm;
+	my $q0=shift @nm;
+	my $q1=shift @nm;
+	my $sect=shift @nm;
+	my $q3=shift @nm;
 	my $name=shift @nm;
 
-	print "\t{\n";
-	if($address=~/^[0-9a-f]+$/ ){ 
-		print "\t .address = 0x$address,\n";
-	}else{
-		print "\t .address = -1,\n";
-		$name = $type;
-		$type = $address;
-	}
+	if ($sect =~ m/.text/ ) {
+	    print "\t{\n";
 
-	print "\t .type = '$type',\n";
-	$name='"'.$name.'"';
-	printf("\t .name = %s\n",$name);
-        print "\t},\n";
+	    print "\t .inode = $inode,\n";
+
+	    if($offset=~/^[0-9a-f]+$/ ){ 
+		print "\t .offset = 0x$offset,\n";
+	    }else{
+		print "\t .offset = 0,\n";
+	    }
+
+	    $name='"'.$name.'"';
+	    printf("\t .name = %s\n",$name);
+	    print "\t},\n";
+	}
 }
 write_bot()
