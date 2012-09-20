@@ -4,9 +4,9 @@ use strict;
 sub write_top
 {
 	print "struct symbol {\n";
-	print "\t struct inode    * inode ;\n";
-	print "\t loff_t          offset ;\n";
-	print "\t char            name[80];\n";
+	print "\tchar            * path;\n";
+	print "\tloff_t          offset ;\n";
+	print "\tchar            * name;\n";
 	print "};\n\n";
 	print "static const struct symbol user_symbols[] = {\n";
 }
@@ -17,13 +17,13 @@ sub write_bot
 }
 
 our $filename;
-our $inode;
+our $path;
 our $objdump;
 our @lines;
 our $line;
 $filename=$ARGV[0];
-$inode=`/bin/stat -c "%i" $filename`;
-chomp($inode);
+$path=`/bin/readlink -f $filename`;
+chomp($path);
 $objdump=`/bin/objdump -t $filename`;
 
 @lines=split '\n', $objdump;
@@ -41,16 +41,18 @@ foreach $line ( @lines ){
 	if ($sect =~ m/.text/ ) {
 	    print "\t{\n";
 
-	    print "\t .inode = $inode,\n";
+	    printf("\t .path = \"%s\",\n", $path);
 
-	    if($offset=~/^[0-9a-f]+$/ ){ 
-		print "\t .offset = 0x$offset,\n";
+	    if($offset=~/^[0-9a-f]+$/ ){
+		my $val = hex($offset);
+		# FIXME FIXME FIXME
+		$val = $val - hex("400000")+ hex("5a");
+		printf("\t .offset = 0x%x,\n", $val);
 	    }else{
 		print "\t .offset = 0,\n";
 	    }
 
-	    $name='"'.$name.'"';
-	    printf("\t .name = %s\n",$name);
+	    printf("\t .name = \"%s\"\n", $name);
 	    print "\t},\n";
 	}
 }

@@ -6,19 +6,28 @@
 
 /* struct symbols is now defined in auto generated include file
 struct symbol {
-	struct inode    * inode ;
+        char            * path ;
 	loff_t          offset ;
-	char		name[80];
+	char		* name;
 };
 */
 
+#include <linux/fs.h>
+#include <linux/namei.h>
 
 struct inode *find_inode(char *name)
 {
 	int i;
 	for ( i=0; i<sizeof(user_symbols)/sizeof(struct symbol);i++ ){
-		if ( strcmp(name,user_symbols[i].name) == 0)
-			return user_symbols[i].inode;
+	  if ( strcmp(name,user_symbols[i].name) == 0) {
+	    struct path path;
+	    struct inode *inode = NULL;
+	    int ret = kern_path(user_symbols[i].path, LOOKUP_FOLLOW, &path);
+	    if (ret)
+	      return 0;
+	    inode = igrab(path.dentry->d_inode);
+	    return inode;
+	  }
 	}
 	return 0;
 }
