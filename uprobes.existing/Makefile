@@ -1,6 +1,7 @@
 # Make a symbol-table include file from an a.out file.
+MKSYM   = ../mksym
 %.st: %
-	nm $< | ../mksym > $<.st
+	$(MKSYM) $< > $<.st
 
 obj-m := probe5.o probe5ag.o probe6.o suicide.o probe5lim.o blink.o blink2.o \
 	rprobe6.o pong.o pong_wa7.o
