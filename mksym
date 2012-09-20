@@ -4,51 +4,56 @@ use strict;
 sub write_top
 {
 	print "struct symbol {\n";
-	print "\tunsigned long address;\n";
-	print "\tchar type;\n";
-	print "\tconst char *name;\n";
-	print "};\n";
-	print "\n";
-        print "static const struct symbol user_symbols[] = {\n";
+	print "\tchar            * path;\n";
+	print "\tloff_t          offset ;\n";
+	print "\tchar            * name;\n";
+	print "};\n\n";
+	print "static const struct symbol user_symbols[] = {\n";
 }
 
 sub write_bot
 {
         print "};\n";
-	print "static int nsymbols = sizeof(user_symbols)/sizeof(user_symbols[0]);\n";
-	print "\n";
-	print "unsigned long find_vaddr(const char *name)\n";
-	print "{\n";
-	print "\tint i;\n";
-	print "\tfor ( i=0; i<nsymbols; i++ ){\n";
-	print "\t\tif ( strcmp(name,user_symbols[i].name) == 0)\n";
-	print "\t\t\treturn user_symbols[i].address;\n";
-	print "\t}\n";
-	print "\treturn 0;\n";
-	print "}\n";
 }
 
+our $filename;
+our $path;
+our $objdump;
+our @lines;
+our $line;
+$filename=$ARGV[0];
+$path=`/bin/readlink -f $filename`;
+chomp($path);
+$objdump=`/bin/objdump -t $filename`;
 
+@lines=split '\n', $objdump;
 write_top();
-while ( <STDIN> ){
-	chomp;
-	my @nm=split;
-	my $address= shift @nm;
-	my $type=shift @nm;
+foreach $line ( @lines ){
+	chomp $line;
+	my @nm=split /\s+/, $line;
+	my $offset= shift @nm;
+	my $q0=shift @nm;
+	my $q1=shift @nm;
+	my $sect=shift @nm;
+	my $q3=shift @nm;
 	my $name=shift @nm;
 
-	print "\t{\n";
-	if($address=~/^[0-9a-f]+$/ ){
-		print "\t .address = 0x$address,\n";
-	}else{
-		print "\t .address = -1,\n";
-		$name = $type;
-		$type = $address;
-	}
+	if ($sect =~ m/.text/ ) {
+	    print "\t{\n";
 
-	print "\t .type = '$type',\n";
-	$name='"'.$name.'"';
-	printf("\t .name = %s\n",$name);
-        print "\t},\n";
+	    printf("\t .path = \"%s\",\n", $path);
+
+	    if($offset=~/^[0-9a-f]+$/ ){
+		my $val = hex($offset);
+		# FIXME FIXME FIXME
+		$val = $val - hex("400000")+ hex("5a");
+		printf("\t .offset = 0x%x,\n", $val);
+	    }else{
+		print "\t .offset = 0,\n";
+	    }
+
+	    printf("\t .name = \"%s\"\n", $name);
+	    print "\t},\n";
+	}
 }
 write_bot()

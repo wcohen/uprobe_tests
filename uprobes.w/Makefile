@@ -3,7 +3,7 @@ KDIR := /lib/modules/$(shell uname -r)/build
 PWD := $(shell pwd)
 
 # Make a symbol-table include file from an a.out file.
-MKSYM   = ./mksym
+MKSYM   = ../mksym
 %.st: %
 	$(MKSYM) $< > $<.st
 
