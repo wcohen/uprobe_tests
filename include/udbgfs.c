@@ -15,9 +15,9 @@ static void child_exit(void);
 struct data_buf_info {
 	spinlock_t lock;
 	size_t bytes_in_buf;
-        size_t bytes_left;
+	size_t bytes_left;
 	void *cur;
-        void *data;
+	void *data;
 };
 
 struct data_buf_info *print_buf;
@@ -26,7 +26,7 @@ static struct dentry  *data_file, *cleanup_file, *dir;
 
 int test_printk(const char *fmt, ...)
 {
-        va_list args;
+	va_list args;
 	int len;
 
 #ifdef UPROBE_DEBUGFS_DEBUG
@@ -102,22 +102,22 @@ static int set_up_print_buffer(void)
 #ifdef UPROBE_DEBUGFS_DEBUG
 	printk(KERN_ERR "	set_up_print_buffer () initiated \n");
 #endif
-	print_buf = kmalloc(sizeof(print_buf),GFP_KERNEL);
-        if ( !print_buf ){
-                return -ENOMEM;
-        }
+	print_buf = kmalloc(sizeof(*print_buf),GFP_KERNEL);
+	if ( !print_buf ){
+		return -ENOMEM;
+	}
 
-        print_buf->data = NULL;
-        print_buf->bytes_in_buf = 0;
+	print_buf->data = NULL;
+	print_buf->bytes_in_buf = 0;
 
-        print_buf->data = kmalloc(DATA_BUF_SIZE,GFP_KERNEL);
-        if( !print_buf->data){
-                kfree(print_buf);
-                return -ENOMEM;
-        }
+	print_buf->data = kmalloc(DATA_BUF_SIZE,GFP_KERNEL);
+	if( !print_buf->data){
+		kfree(print_buf);
+		return -ENOMEM;
+	}
 
-        print_buf->cur = print_buf->data;
-        print_buf->bytes_left = DATA_BUF_SIZE;
+	print_buf->cur = print_buf->data;
+	print_buf->bytes_left = DATA_BUF_SIZE;
 	spin_lock_init(&print_buf->lock);
 	printk(KERN_ERR "	set_up_print_buffer () completed\n");
 
@@ -140,14 +140,14 @@ int u_dbfs_init(const char *dbg_dir_path)
 	printk(KERN_ERR "u_dbfs_init(%s) initiated \n", dbg_dir_path);
 #endif
 	dir = debugfs_create_dir(dbg_dir_path, NULL);
-        if (!dir) {
+	if (!dir) {
 		printk(KERN_ERR "Can't create /debug/%s\n", dbg_dir_path);
-                return -1;
-        }
+		return -1;
+	}
 
 	data_file = debugfs_create_file("data", 0644,dir,0, &fops_data);
 	if (!data_file) {
-                printk(KERN_ERR "Can't create /debug/%s/data\n", dbg_dir_path);
+		printk(KERN_ERR "Can't create /debug/%s/data\n", dbg_dir_path);
 		debugfs_remove(dir);
 		return -1;
 	}
