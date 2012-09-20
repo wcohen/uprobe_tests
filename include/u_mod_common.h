@@ -10,8 +10,8 @@
 
 /* FIXME move into a header */
 struct uinfo {
-        pid_t utid,ktid;
-        ulong ucount, kcount;
+	pid_t utid,ktid;
+	ulong ucount, kcount;
 	int results;
 };
 
@@ -40,12 +40,12 @@ ulong *get_first_arg(struct pt_regs * regs)
 
 void printk_regs(struct pt_regs * regs)
 {
-        test_printk ("EIP: %08lx\n",REG_IP(regs));
-        test_printk ("ESP: %08lx\n",REG_SP(regs));
-        test_printk ("EAX: %08lx EBX: %08lx ECX: %08lx EDX: %08lx\n",
-                REG_0(regs),REG_3(regs),REG_1(regs),REG_2(regs));
-        test_printk ("ESI: %08lx EDI: %08lx EBP: %08lx\n",
-                REG_6(regs), REG_7(regs), REG_5(regs));
+	test_printk ("EIP: %08lx\n",REG_IP(regs));
+	test_printk ("ESP: %08lx\n",REG_SP(regs));
+	test_printk ("EAX: %08lx EBX: %08lx ECX: %08lx EDX: %08lx\n",
+		REG_0(regs),REG_3(regs),REG_1(regs),REG_2(regs));
+	test_printk ("ESI: %08lx EDI: %08lx EBP: %08lx\n",
+		REG_6(regs), REG_7(regs), REG_5(regs));
 }
 
 ulong *get_first_arg(struct pt_regs * regs)
@@ -62,8 +62,8 @@ ulong *get_first_arg(struct pt_regs * regs)
 
 ulong *get_first_arg(struct pt_regs * regs)
 {
-        // place holder
-        return NULL;
+	// place holder
+	return NULL;
 }
 
 #elif defined (__powerpc64__)
@@ -75,8 +75,8 @@ ulong *get_first_arg(struct pt_regs * regs)
 
 ulong *get_first_arg(struct pt_regs * regs)
 {
-        // place holder
-        return NULL;
+	// place holder
+	return NULL;
 }
 
 
@@ -92,8 +92,8 @@ ulong *get_first_arg(struct pt_regs * regs)
 
 ulong *get_first_arg(struct pt_regs * regs)
 {
-        // place holder
-        return NULL;
+	// place holder
+	return NULL;
 }
 
 #else
