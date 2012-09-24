@@ -28,15 +28,15 @@ ulong *get_first_arg(struct pt_regs * regs)
 
 #elif defined (__i386__)
 
-#define REG_IP(regs) regs->eip
-#define REG_SP(regs) regs->esp
-#define REG_0(regs)  regs->eax
-#define REG_1(regs)  regs->ecx
-#define REG_2(regs)  regs->edx
-#define REG_3(regs)  regs->ebx
-#define REG_5(regs)  regs->ebp
-#define REG_6(regs)  regs->esi
-#define REG_7(regs)  regs->edi
+#define REG_IP(regs) regs->ip
+#define REG_SP(regs) regs->sp
+#define REG_0(regs)  regs->ax
+#define REG_1(regs)  regs->cx
+#define REG_2(regs)  regs->dx
+#define REG_3(regs)  regs->bx
+#define REG_5(regs)  regs->bp
+#define REG_6(regs)  regs->si
+#define REG_7(regs)  regs->di
 
 void printk_regs(struct pt_regs * regs)
 {
