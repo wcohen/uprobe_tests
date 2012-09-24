@@ -1,7 +1,7 @@
 
 default:
 	( cd uprobes.w && make -f Makefile default)
-#	( cd uprobes.existing && make -f Makefile default)
+	( cd uprobes.existing && make -f Makefile default)
 
 check: default
 	runtest --tool uprobes

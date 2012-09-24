@@ -3,8 +3,10 @@ MKSYM   = ../mksym
 %.st: %
 	$(MKSYM) $< > $<.st
 
-obj-m := probe5.o probe5ag.o probe6.o suicide.o probe5lim.o blink.o blink2.o \
-	rprobe6.o pong.o pong_wa7.o
+#FIXME disable the various builds until they are fixed.
+#obj-m := probe5.o probe5ag.o probe6.o suicide.o probe5lim.o blink.o blink2.o \
+#	rprobe6.o pong.o pong_wa7.o
+obj-m := 
 KDIR := /lib/modules/$(shell uname -r)/build
 PWD := $(shell pwd)
 
