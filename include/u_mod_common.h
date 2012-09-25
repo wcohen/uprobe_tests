@@ -101,71 +101,73 @@ ulong *get_first_arg(struct pt_regs * regs)
 #endif
 
 
-/* The main job of the probe handler is to increment the uinfo->kcount seen by the
- * user.  It is up to the user thread to decide if the value of kcount is correct or
- * not.  Other values may be sanity checked or set here also.
+/* The main job of the probe handler is to increment the uinfo->kcount
+ * seen by the user.  It is up to the user thread to decide if the
+ * value of kcount is correct or not.  Other values may be sanity
+ * checked or set here also.
  */
 
 unsigned long num_probes;
 
 int probe_handler(struct uprobe_consumer *u, struct pt_regs *regs)
 {
-		struct uinfo *slot;
-		pid_t utid,ktid;
-		ulong kcount,EA;
+	struct uinfo *slot;
+	pid_t utid,ktid;
+	ulong kcount,EA;
 		
 #ifdef DEBUG
-		test_printk("---------------------------------------------------\n");
-		test_printk("probe_handler() called for pid=%d\n",current->pid);
-		test_printk_regs(regs);
-		test_printk("---------------------------------------------------\n");
+	test_printk("---------------------------------------------------\n");
+	test_printk("probe_handler() called for pid=%d\n",current->pid);
+	test_printk_regs(regs);
+	test_printk("---------------------------------------------------\n");
 #endif
 
-		slot = (struct uinfo *)get_first_arg(regs);
+	slot = (struct uinfo *)get_first_arg(regs);
 #ifdef DEBUG
-		test_printk("slot=%p\n",slot);
+	test_printk("slot=%p\n",slot);
 #endif
 
-		/* save current->pid in slot->ktid */
-		ktid=current->pid;
-		EA=offsetof(struct uinfo,ktid)+(ulong)slot;
-		if ( put_user(ktid,(ulong __user *)EA) != 0 ){
-			test_printk(" put_user returned an error!\n");
-		}
+	/* save current->pid in slot->ktid */
+	ktid=current->pid;
+	EA=offsetof(struct uinfo,ktid)+(ulong)slot;
+	if ( put_user(ktid,(ulong __user *)EA) != 0 ){
+		test_printk(" put_user returned an error!\n");
+	}
 
-		/* sanity check that ktid==utid */
-		EA=offsetof(struct uinfo,utid)+(ulong)slot;
-		if ( get_user(utid,(ulong __user *)EA) != 0 ){
-			test_printk(" get_user returned an error!\n");
-		}
+	/* sanity check that ktid==utid */
+	EA=offsetof(struct uinfo,utid)+(ulong)slot;
+	if ( get_user(utid,(ulong __user *)EA) != 0 ){
+		test_printk(" get_user returned an error!\n");
+	}
 
-		if (ktid != utid){
-			test_printk("kthread: ERROR ktid and utid don't match!! ");
-			test_printk("kthread: utid=%d ktid=%d\n",utid,ktid);
-		}
+	if (ktid != utid){
+		test_printk("kthread: ERROR ktid and utid don't match!! ");
+		test_printk("kthread: utid=%d ktid=%d\n",utid,ktid);
+	}
 
-		/* get the slot->kcount */
-		EA=offsetof(struct uinfo,kcount)+(ulong)slot;
-		if ( get_user(kcount,(ulong __user *)EA) != 0 )
-			test_printk(" get_user returned an error!\n");
+	/* get the slot->kcount */
+	EA=offsetof(struct uinfo,kcount)+(ulong)slot;
+	if ( get_user(kcount,(ulong __user *)EA) != 0 )
+		test_printk(" get_user returned an error!\n");
 
-		/* If slot->kcount == -1 then this is the first time
-		 * this probe point has been hit so set slot->ucount=-1
-		 * to flag the user thread that probe counting has started.
-		 */
-		if (kcount == -1){
-			EA=offsetof(struct uinfo,ucount)+(ulong)slot;
-			if ( put_user(kcount,(ulong __user *)EA) != 0 )
-				test_printk(" put_user returned an error!\n");
-		}
-
-		/* incement the slot->kcount */
-		kcount++;
-		EA=offsetof(struct uinfo,kcount)+(ulong)slot;
+	/* If slot->kcount == -1 then this is the first time this
+	 * probe point has been hit so set slot->ucount=-1 to
+	 * flag the user thread that probe counting has
+	 * started.
+	 */
+	if (kcount == -1){
+		EA=offsetof(struct uinfo,ucount)+(ulong)slot;
 		if ( put_user(kcount,(ulong __user *)EA) != 0 )
 			test_printk(" put_user returned an error!\n");
+	}
 
-		num_probes++;
-		return 0;
+	/* incement the slot->kcount */
+	kcount++;
+	EA=offsetof(struct uinfo,kcount)+(ulong)slot;
+	if ( put_user(kcount,(ulong __user *)EA) != 0 )
+		test_printk(" put_user returned an error!\n");
+
+	num_probes++;
+	return 0;
 }
 
