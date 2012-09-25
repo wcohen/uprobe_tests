@@ -47,7 +47,7 @@ foreach $line ( @lines ){
 		my $val = hex($offset);
 		# FIXME FIXME FIXME
 		$val = $val - hex("400000")+ hex("5a");
-		printf("\t .offset = 0x%x,\n", $val);
+		printf("\t .offset = (loff_t)0x%xULL,\n", $val);
 	    }else{
 		print "\t .offset = 0,\n";
 	    }
