@@ -22,8 +22,8 @@ struct uinfo {
 
 ulong *get_first_arg(struct pt_regs * regs)
 {
-	// place holder
-	return NULL;
+	/* %rdi has first argument */
+	return (ulong *)regs->di;
 }
 
 #elif defined (__i386__)
