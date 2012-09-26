@@ -24,7 +24,7 @@ our $line;
 $filename=$ARGV[0];
 $path=`/bin/readlink -f $filename`;
 chomp($path);
-$objdump=`/bin/objdump -t $filename`;
+$objdump=`/bin/objdump -t $filename | sort -k6`;
 
 @lines=split '\n', $objdump;
 write_top();
